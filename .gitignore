@@ -1,0 +1,53 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+# --- Virtual Environment ---
+my-env/
+venv/
+.env/
+.venv/
+env/
+*.pyenv
+pyvenv.cfg
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+# --- Jupyter / VSCode ---
+.ipynb_checkpoints/
+.vscode/
+
+# --- Models / Embeddings ---
+*.h5
+*.keras
+*.npy
+*.pt
+*.pth
+*.ckpt
+*.joblib
+*.pickle
+*.tar.gz
+model/collab_recommender/*
+!model/collab_recommender/.gitkeep   # keep dir structure
+brand_embeddings_chunk.npy
+user_recommender_embeddings.npy
+content_Recommendation_system.keras
+
+# --- Data (exclude large local dumps but allow products.csv placeholder) ---
+*.csv
+!products.csv     # keep the empty products.csv so Streamlit works
+*.tsv
+*.json
+*.parquet
+
+# --- Environment / Secrets ---
+*.env
+.env.*
+.envrc
+
