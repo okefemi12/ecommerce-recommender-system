@@ -3,7 +3,9 @@
 This project implements both **content-based** and **sequential recommendation systems** for an e-commerce platform.  
 
 - **Content-Based Filtering**: Uses brand, category, and product metadata to recommend similar products.  
-- **Sequential Model**: Uses Transformer-based architecture to predict the next likely purchase based on user interaction history.  
+- **Sequential Model**: Uses Transformer-based architecture to predict the next likely purchase based on user interaction history.
+- **. Collaborative Filtering (CoNAR)**: Leverages the user–item interaction matrix and applies neural attention mechanisms to capture hidden patterns in user behavior, enabling recommendations even when explicit product metadata is limited.  
+
 
 ## Dataset  
 - Collected from [Kaggle](https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store).  
@@ -19,3 +21,11 @@ This project implements both **content-based** and **sequential recommendation s
 cd flask_app
 pip install -r requirements.txt
 python app.py
+
+### Business Value  
+
+- **Personalization at Scale**: Users receive recommendations tailored to their preferences, browsing history, and hidden interaction patterns.  
+- **Higher Conversion Rates**: By predicting the next likely purchase, the system nudges users toward completing transactions.  
+- **Enhanced Engagement**: Personalized feeds increase session length, repeat visits, and customer retention.  
+- **Cold-Start Handling**: Content-based methods mitigate new product/user scenarios, while collaborative and sequential models improve relevance for active users.  
+- **Business Growth**: Overall, the system translates **user behavior into actionable insights**, driving sales, customer satisfaction, and long-term loyalty.  
