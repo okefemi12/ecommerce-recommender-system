@@ -13,6 +13,7 @@ from collections import defaultdict
 import torch
 
 from cornac.eval_methods import RatioSplit
+from huggingface_hub import hf_hub_download
 
 import traceback
 
@@ -21,7 +22,19 @@ app = Flask(__name__)
 # --- Load Combined Data ---
 data = pd.read_csv("products.csv")  
 
+#-- models on hugging face ---
+keras_path = hf_hub_download(
+    repo_id="oke39/ecommerce-recommender-models",
+    filename="content_Recommendation_system.keras"
+)
 
+# Load the model
+sequential_model = tf.keras.models.load_model(keras_path)
+
+pkl_path = hf_hub_download(
+    repo_id="oke39/ecommerce-recommender-models",
+    filename="2025-08-25_14-19-26-363710.pkl"
+)
 
 # --- Label Encoders ---
 product_id_encode = LabelEncoder().fit(data['product_id'])
@@ -65,7 +78,7 @@ class TransformerBlock(layers.Layer):
 
 # --- Load Trained Model ---
 model = tf.keras.models.load_model(
-    "model/content_Recommendation_system.keras",
+    sequential_model,
     custom_objects={"TransformerBlock": TransformerBlock}
 )
 
@@ -295,7 +308,7 @@ def collaborative_recommender():
             # Try alternative loading method
             try:
                 # Load with explicit CPU mapping
-                model_path = "model/collab_recommender/VAECF"
+                model_path = pkl_path
                 model = torch.load(model_path, map_location='cpu')
                 if hasattr(model, 'to'):
                     model = model.to(device)
