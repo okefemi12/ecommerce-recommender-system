@@ -19,6 +19,8 @@ import traceback
 
 app = Flask(__name__)
 
+token = os.getenv("HF_TOKEN")
+
 # --- Load Combined Data ---
 data = pd.read_csv("products.csv")  
 
