@@ -20,4 +20,4 @@ ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=production
 
 # Run Flask server
-CMD ["python", "app/app.py"]
+CMD ["python", "flask_app/app.py"]
