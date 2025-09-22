@@ -1,3 +1,5 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 from flask import Flask, request, jsonify
 import pandas as pd
 import numpy as np
@@ -7,15 +9,12 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import LabelEncoder,MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity
-import os
 from transformers import TFBertModel, BertTokenizer
 from collections import defaultdict
 import torch
 from functools import lru_cache
-
 from cornac.eval_methods import RatioSplit
 from huggingface_hub import hf_hub_download
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import traceback
 
