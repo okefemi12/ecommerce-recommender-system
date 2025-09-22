@@ -1,4 +1,3 @@
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 from flask import Flask, request, jsonify
 import pandas as pd
 import numpy as np
@@ -16,6 +15,7 @@ from functools import lru_cache
 
 from cornac.eval_methods import RatioSplit
 from huggingface_hub import hf_hub_download
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import traceback
 
