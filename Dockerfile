@@ -15,7 +15,7 @@ RUN pip install --upgrade pip \
 EXPOSE 5000
 
 # Environment variables for Flask (optional but good practice)
-ENV FLASK_APP=app/app.py
+ENV FLASK_APP=flask_app/app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=production
 
