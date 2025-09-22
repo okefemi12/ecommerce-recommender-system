@@ -12,7 +12,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 from transformers import TFBertModel, BertTokenizer
 from collections import defaultdict
 import torch
-from functools import lru_cache
 from cornac.eval_methods import RatioSplit
 from huggingface_hub import hf_hub_download
 
@@ -23,62 +22,67 @@ app = Flask(__name__)
 token = os.getenv("HF_TOKEN")
 
 # --- Load Combined Data ---
-@lru_cache(maxsize=1)
-def get_data():
-    return pd.read_csv("products.csv")
-
-
+data = pd.read_csv("products.csv")  
 
 #-- models on hugging face ---
-# the collaborative model
+keras_path = hf_hub_download(
+    repo_id="oke39/ecommerce-recommender-models",
+    filename="content_Recommendation_system.keras"
+)
+
+# Load the model
+sequential_model = tf.keras.models.load_model(keras_path)
+
 pkl_path = hf_hub_download(
     repo_id="oke39/ecommerce-recommender-models",
     filename="2025-08-25_14-19-26-363710.pkl"
 )
-# sequential model
-@lru_cache(maxsize=1)
-def get_keras_model():
-    keras_path = hf_hub_download(
-        repo_id="oke39/ecommerce-recommender-models",
-        filename="content_Recommendation_system.keras"
-    )
-    from tensorflow.keras.saving import register_keras_serializable
 
-    @register_keras_serializable()
-    class TransformerBlock(layers.Layer):
-        def __init__(self, embed_dim, num_heads, ff_dim, **kwargs):
-            super().__init__(**kwargs)
-            self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
-            self.ffn = tf.keras.Sequential([
-                layers.Dense(ff_dim, activation="relu"),
-                layers.Dense(embed_dim)
-            ])
-            self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
-            self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
-            self.dropout1 = layers.Dropout(0.1)
-            self.dropout2 = layers.Dropout(0.1)
+# --- Label Encoders ---
+product_id_encode = LabelEncoder().fit(data['product_id'])
+category_encoder = LabelEncoder().fit(data['category_code'])
+brand_encoder = LabelEncoder().fit(data['brand'])
 
-        def call(self, inputs, training=False, mask=None):
-            attn_output = self.att(inputs, inputs, attention_mask=mask)
-            attn_output = self.dropout1(attn_output, training=training)
-            out1 = self.layernorm1(inputs + attn_output)
-            ffn_output = self.ffn(out1)
-            ffn_output = self.dropout2(ffn_output, training=training)
-            return self.layernorm2(out1 + ffn_output)
 
-    return tf.keras.models.load_model(
-        keras_path,
-        custom_objects={"TransformerBlock": TransformerBlock}
-    )
+# --- Custom Transformer Layer ---
+from tensorflow.keras.saving import register_keras_serializable
 
-@lru_cache(maxsize=1)
-def get_label_encoders():
-    data = get_data()
-    return {
-        "product": LabelEncoder().fit(data['product_id']),
-        "category": LabelEncoder().fit(data['category_code']),
-        "brand": LabelEncoder().fit(data['brand'])
-    }
+@register_keras_serializable()
+class TransformerBlock(layers.Layer):
+    def __init__(self, embed_dim, num_heads, ff_dim, **kwargs):
+        super(TransformerBlock, self).__init__(**kwargs)
+        self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
+        self.ffn = tf.keras.Sequential([
+            layers.Dense(ff_dim, activation="relu"),
+            layers.Dense(embed_dim)
+        ])
+        self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
+        self.dropout1 = layers.Dropout(0.1)
+        self.dropout2 = layers.Dropout(0.1)
+
+    def call(self, inputs, training=False, mask=None):
+        attn_output = self.att(inputs, inputs, attention_mask=mask)
+        attn_output = self.dropout1(attn_output, training=training)
+        out1 = self.layernorm1(inputs + attn_output)
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        return self.layernorm2(out1 + ffn_output)
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "embed_dim": self.att.key_dim,
+            "num_heads": self.att.num_heads,
+            "ff_dim": self.ffn.layers[0].units,
+        })
+        return config
+
+# --- Load Trained Model ---
+model = tf.keras.models.load_model(
+    sequential_model,
+    custom_objects={"TransformerBlock": TransformerBlock}
+)
 
 # --- Preprocess Input ---
 
@@ -144,33 +148,20 @@ def filter_indices(indices, max_len):
 @app.route("/recommend", methods=["POST"])
 def recommend():
     try:
-        req = request.get_json()
-        user_id = req.get("user_id")
-        if not user_id:
-            return jsonify({"error": "Missing user_id"}), 400
+        data_input = request.get_json()
+        print("Received data:", data_input)
 
-        data = get_data()
-        encoders = get_label_encoders()
-        model = get_keras_model()
+        input_vector = preprocess_input(data_input)
+        predictions = model.predict(input_vector)
 
-        # User history
-        user_history = data[data['user_id'].astype(str) == str(user_id)]
-        if user_history.empty:
-            return jsonify({"error": "User ID not found"}), 400
-
-        product_sequence = user_history.sort_values("event_type")["product_id"].tolist()
-        encoded_seq = encoders["product"].transform(product_sequence)
-        padded = pad_sequences([encoded_seq], maxlen=9, padding='post')
-
-        predictions = model.predict(padded)
         top_indices = predictions[0].argsort()[-5:][::-1]
         recommended = data.iloc[top_indices].to_dict(orient="records")
 
         return jsonify({"recommendations": recommended})
 
-    except Exception:
-        return jsonify({"error": traceback.format_exc()}), 500
-
+    except Exception as e:
+        print("Error:", traceback.format_exc())
+        return jsonify({"error": str(e)}), 400
 
 
 @app.route("/recommend_user_content_bert", methods=["POST"])
