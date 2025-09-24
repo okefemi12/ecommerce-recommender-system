@@ -21,34 +21,76 @@ app = Flask(__name__)
 
 token = os.getenv("HF_TOKEN")
 
-# --- Load Combined Data ---
-data = pd.read_csv("products.csv")  
+# ---------- Globals (lazy init) ----------
+data = None
+product_id_encode = None
+category_encoder = None
+brand_encoder = None
+interpreter = None
+input_details = None
+output_details = None
+brand_embeddings = None
+tokenizer = None
+pkl_path = None
 
 
-# --- Label Encoders ---
-product_id_encode = LabelEncoder().fit(data['product_id'])
-category_encoder = LabelEncoder().fit(data['category_code'])
-brand_encoder = LabelEncoder().fit(data['brand'])
+# ---------- confirmation  Route ----------
+@app.route("/")
+def health():
+    return {"status": "ok"}
 
-#-- models on hugging face ---
-pkl_path = hf_hub_download(
-    repo_id="oke39/ecommerce-recommender-models",
-    filename="2025-08-25_14-19-26-363710.pkl"
-)
 
-tflite_path = hf_hub_download(
-    repo_id="oke39/ecommerce-recommender-models",
-    filename="sequential_Recommendation_system.tflite"
-)
+# ---------- Lazy Initializer ----------
+@app.before_first_request
+def load_resources():
+    global data, product_id_encode, category_encoder, brand_encoder
+    global interpreter, input_details, output_details
+    global brand_embeddings, tokenizer, pkl_path
 
-interpreter = tf.lite.Interpreter(model_path=tflite_path)
-interpreter.allocate_tensors()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+    try:
+        # Load dataset
+        if data is None:
+            data = pd.read_csv("products.csv")
+            product_id_encode = LabelEncoder().fit(data['product_id'])
+            category_encoder = LabelEncoder().fit(data['category_code'])
+            brand_encoder = LabelEncoder().fit(data['brand'])
 
+        # Hugging Face models
+        if pkl_path is None:
+            pkl_path = hf_hub_download(
+                repo_id="oke39/ecommerce-recommender-models",
+                filename="2025-08-25_14-19-26-363710.pkl",
+                token=token
+            )
+
+        if interpreter is None:
+            tflite_path = hf_hub_download(
+                repo_id="oke39/ecommerce-recommender-models",
+                filename="sequential_Recommendation_system.tflite",
+                token=token
+            )
+            interpreter = tf.lite.Interpreter(model_path=tflite_path)
+            interpreter.allocate_tensors()
+            input_details = interpreter.get_input_details()
+            output_details = interpreter.get_output_details()
+
+        if tokenizer is None:
+            tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+        if brand_embeddings is None:
+            brand_embeddings = tf.convert_to_tensor(np.load("brand_embeddings_chunk.npy"))
+
+        print("Resources loaded successfully")
+
+    except Exception as e:
+        print(f" Error loading resources: {e}")
+        traceback.print_exc()
+
+
+# ---------- Helper ----------
 def predict_tflite(padded_sequence):
+    global interpreter, input_details, output_details
     input_data = np.array(padded_sequence, dtype=np.float32)
-    # Ensure batch dimension
     if len(input_data.shape) == 1:
         input_data = np.expand_dims(input_data, axis=0)
     interpreter.set_tensor(input_details[0]['index'], input_data)
@@ -56,60 +98,8 @@ def predict_tflite(padded_sequence):
     preds = interpreter.get_tensor(output_details[0]['index'])
     return preds
 
-# --- Preprocess Input ---
 
-def preprocess_input(input_dict):
-    user_id = input_dict.get('user_id')
-    if user_id is None:
-        raise ValueError("Missing user_id in request.")
-
-    #  Reload the current dataset
-    current_data = pd.read_csv("products.csv")
-
-    # Reload encoders dynamically based on new dataset
-    product_id_encode = LabelEncoder().fit(current_data['product_id'])
-    category_encoder = LabelEncoder().fit(current_data['category_code'])
-    brand_encoder = LabelEncoder().fit(current_data['brand'])
-
-    #  Check user ID (cast to str to avoid int/str mismatch)
-    user_history = current_data[current_data['user_id'].astype(str) == str(user_id)]
-    if user_history.empty:
-        raise ValueError("User ID not found in dataset.")
-
-    #  Prepare product sequence for model
-    product_sequence = user_history.sort_values("event_type")["product_id"].tolist()
-    product_sequence_encoded = product_id_encode.transform(product_sequence)
-    padded_sequence = pad_sequences([product_sequence_encoded], maxlen=9, padding='post')
-
-    return padded_sequence
-
-
-
-
-#-- content based recommender part(user-profile) --
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-brand_embeddings = tf.convert_to_tensor(np.load("brand_embeddings_chunk.npy"))
-
-
-
-
-def filter_indices(indices, max_len):
-    """
-    Filters out indices that are out of bounds.
-
-    Parameters:
-        indices (list of int): The list of indices to filter.
-        max_len (int): The maximum valid index (length of the embeddings tensor).
-
-    Returns:
-        list of int: Valid indices only.
-    """
-    return [i for i in indices if 0 <= i < max_len]
-
-
-
-# --- Recommendation Endpoint ---
+# ---------- Recommendation Endpoints ----------
 @app.route("/recommend", methods=["POST"])
 def recommend():
     try:
@@ -118,28 +108,20 @@ def recommend():
         if not user_id:
             return jsonify({"error": "Missing user_id"}), 400
 
-        # Filter user history
         user_history = data[data['user_id'].astype(str) == str(user_id)]
         if user_history.empty:
             return jsonify({"error": "User ID not found"}), 400
 
-        # Encode sequence
         product_sequence = user_history.sort_values("event_type")["product_id"].tolist()
         encoded_seq = product_id_encode.transform(product_sequence)
         padded = pad_sequences([encoded_seq], maxlen=9, padding='post')
 
-        # Predict with TFLite
         predictions = predict_tflite(padded)
-
-        # Get top-5 product IDs
         top_indices = predictions[0].argsort()[-5:][::-1]
         predicted_ids = product_id_encode.inverse_transform(top_indices)
 
-        # Fetch recommended products from dataset
         recommended = data[data['product_id'].isin(predicted_ids)].drop_duplicates("product_id").head(5)
-        recommendations = recommended.to_dict(orient="records")
-
-        return jsonify({"recommendations": recommendations})
+        return jsonify({"recommendations": recommended.to_dict(orient="records")})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
