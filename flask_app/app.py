@@ -3,18 +3,15 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 from flask import Flask, request, jsonify
 import pandas as pd
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras import layers
-from tensorflow.keras.models import Model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from sklearn.preprocessing import LabelEncoder,MinMaxScaler
+import tflite_runtime.interpreter as tflite  
+from tensorflow.keras.preprocessing.sequence import pad_sequences  
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import TFBertModel, BertTokenizer
+from transformers import BertTokenizer
 from collections import defaultdict
 import torch
 from cornac.eval_methods import RatioSplit
 from huggingface_hub import hf_hub_download
-
 import traceback
 
 app = Flask(__name__)
@@ -34,7 +31,7 @@ tokenizer = None
 pkl_path = None
 
 
-# ---------- confirmation  Route ----------
+# ---------- confirmation Route ----------
 @app.route("/")
 def health():
     return {"status": "ok"}
@@ -69,7 +66,7 @@ def load_resources():
                 filename="sequential_Recommendation_system.tflite",
                 token=token
             )
-            interpreter = tf.lite.Interpreter(model_path=tflite_path)
+            interpreter = tflite.Interpreter(model_path=tflite_path)  # ✅ tflite-runtime
             interpreter.allocate_tensors()
             input_details = interpreter.get_input_details()
             output_details = interpreter.get_output_details()
@@ -78,12 +75,13 @@ def load_resources():
             tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
         if brand_embeddings is None:
-            brand_embeddings = tf.convert_to_tensor(np.load("brand_embeddings_chunk.npy"))
+            brand_embeddings = np.load("brand_embeddings_chunk.npy")
+            brand_embeddings = torch.tensor(brand_embeddings)  # keeps compatibility
 
         print("Resources loaded successfully")
 
     except Exception as e:
-        print(f" Error loading resources: {e}")
+        print(f"Error loading resources: {e}")
         traceback.print_exc()
 
 
@@ -125,7 +123,6 @@ def recommend():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/recommend_user_content_bert", methods=["POST"])
 def recommend_user_content_bert():
