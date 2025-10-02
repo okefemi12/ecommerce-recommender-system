@@ -1,0 +1,58 @@
+# ----------------------------
+# Python cache & bytecode
+# ----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# ----------------------------
+# Virtual environments
+# ----------------------------
+venv/
+.venv/
+.env
+*.egg-info
+
+# ----------------------------
+# Git & editor configs
+# ----------------------------
+.git
+.gitignore
+*.swp
+*.swo
+*.bak
+*.tmp
+.DS_Store
+.vscode/
+.idea/
+
+# ----------------------------
+# Logs & temp
+# ----------------------------
+*.log
+*.out
+*.err
+
+# ----------------------------
+# Large ML/Data files (ignored by default)
+# ----------------------------
+*.npy
+*.npz
+*.pkl
+*.pt
+*.pth
+*.h5
+*.ckpt
+*.joblib
+*.csv
+*.tsv
+*.parquet
+
+# ----------------------------
+# EXCEPTIONS - files we actually need
+# ----------------------------
+!products.csv
+!brand_embeddings_chunk.npy
+!user_recommender_embeddings.npy
