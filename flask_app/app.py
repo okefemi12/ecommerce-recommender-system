@@ -38,7 +38,7 @@ def health():
 
 
 # ---------- Lazy Initializer ----------
-@app.before_first_request
+@app.before_request
 def load_resources():
     global data, product_id_encode, category_encoder, brand_encoder
     global interpreter, input_details, output_details

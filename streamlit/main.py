@@ -132,7 +132,7 @@ elif model_choice == "BERT-based: Similar Brand/Price":
             st.error(f"Request failed: {str(e)}")
 
 elif model_choice == "Varation Autoencoder: Collaborative Filter Recommender":
-     st.subheader("Step 3: Enter User ID for Transformer Recommendation")
+     st.subheader("Step 3: Enter User ID for Collab Recommendations")
      user_id_vae = st.text_input("Enter a valid user ID (e.g., 513103710)", key="vae_user")
 
      top_n_vae= st.number_input("Number of Recommendations", min_value=1, max_value=20, value=5)
