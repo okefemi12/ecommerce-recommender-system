@@ -10,17 +10,33 @@ st.title("🛒 Multi-Model Product Recommender System")
 # Upload Dataset Step
 # -------------------
 st.subheader("Step 1: Upload Your Dataset (products.csv)")
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+uploaded_file = st.file_uploader("Upload CSV or Excel file", type=["csv", "xlsx", "xls"])
+
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file)
+    else:  # Excel
+        df = pd.read_excel(uploaded_file)
+
     st.success("File uploaded successfully!")
     st.dataframe(df.head())
-    # Save to Flask-accessible location
-    uploaded_path = os.path.join("..", "app", "products.csv")
-    df.to_csv(uploaded_path, index=False)
+
+    # Upload as CSV to backend
+    csv_buffer = df.to_csv(index=False).encode('utf-8')
+    files = {"file": ("products.csv", csv_buffer, "text/csv")}
+    upload_url = "http://localhost:5000/upload_dataset"
+
+    upload_response = requests.post(upload_url, files=files)
+
+    if upload_response.status_code == 200:
+        st.success("Backend updated with uploaded data.")
+    else:
+        st.error("Failed to upload dataset to backend.")
+        st.error(upload_response.json().get("error", "Unknown error"))
 else:
-    st.info("Please upload a CSV with columns: user_id, product_id, brand, price, category_code,event_type(view,purchase)")
+    st.info("Please upload a valid CSV or Excel file (It must contain columns: user_id, product_id, brand, price, category_code,event_type(view,purchase)).")
+
 
 # -------------------
 # Choose Recommender

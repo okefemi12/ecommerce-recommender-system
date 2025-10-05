@@ -66,7 +66,7 @@ def load_resources():
                 filename="sequential_Recommendation_system.tflite",
                 token=token
             )
-            interpreter = tflite.Interpreter(model_path=tflite_path)  # ✅ tflite-runtime
+            interpreter = tflite.Interpreter(model_path=tflite_path)  # tflite-runtime
             interpreter.allocate_tensors()
             input_details = interpreter.get_input_details()
             output_details = interpreter.get_output_details()
@@ -95,6 +95,23 @@ def predict_tflite(padded_sequence):
     interpreter.invoke()
     preds = interpreter.get_tensor(output_details[0]['index'])
     return preds
+
+#--     upload dataset -- 
+@app.route("/upload_dataset", methods=["POST"])
+def upload_dataset():
+    global data
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No file part in request"}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+        file.save("products.csv")
+        data = None  # Force reload
+        return jsonify({"message": "Dataset uploaded and replaced successfully."})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 # ---------- Recommendation Endpoints ----------
