@@ -3,13 +3,12 @@ import pandas as pd
 import requests
 import os
 from io import BytesIO
-from dotenv import load_dotenv
 
 # -------------------
 # Load environment variables
 # -------------------
 load_dotenv()
-API_BASE_URL = os.getenv("API_BASE_URL", "https://ecommerce-recommender-system-iikz.onrender.com")
+API_BASE_URL = "https://ecommerce-recommender-system-iikz.onrender.com"
 
 # -------------------
 # Streamlit Config
