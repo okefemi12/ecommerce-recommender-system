@@ -1,23 +1,24 @@
-# Base image
+# ---------- Base image ----------
 FROM python:3.10-slim
 
-# Set working directory inside container
+# ---------- Working directory ----------
 WORKDIR /app
 
-# Copy all files into the container
+# ---------- Copy project files ----------
 COPY . .
 
-# Install dependencies
+# ---------- Install dependencies ----------
 RUN pip install --upgrade pip \
  && pip install -r requirements.txt
 
-# Expose Flask port
-EXPOSE 1000
+# ---------- Expose port ----------
+EXPOSE 10000
 
-# Environment variables for Flask (optional but good practice)
+# ---------- Environment variables ----------
 ENV FLASK_APP=flask_app/app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=production
 
-# Run Flask server
-CMD ["gunicorn", "--bind", "0.0.0.0:${PORT:-10000}", "flask_app.app:app"]
+# ---------- Run Gunicorn ----------
+CMD gunicorn --bind 0.0.0.0:${PORT:-10000} flask_app.app:app
+
