@@ -7,7 +7,7 @@ from io import BytesIO
 # -------------------
 # Load environment variables
 # -------------------
-load_dotenv()
+
 API_BASE_URL = "https://ecommerce-recommender-system-iikz.onrender.com"
 
 # -------------------

@@ -21,7 +21,6 @@ except Exception:
         TFLITE_INTERPRETER = tf.lite.Interpreter
     except Exception:
         TFLITE_INTERPRETER = None
-
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity
@@ -76,7 +75,6 @@ _resources = {
 }
 
 # ---------- Utility helpers ----------
-
 def s3_upload_fileobj(file_obj, bucket, key):
     try:
         file_obj.seek(0)
@@ -108,7 +106,6 @@ def ensure_products_local():
     return None
 
 # ---------- Loaders (lazy) ----------
-
 def load_dataset(force_reload=False):
     with _resources_lock:
         if _resources["data"] is not None and not force_reload:
@@ -256,7 +253,7 @@ def ensure_tokenizer():
 
 @app.route("/")
 def health():
-    return {"status": "ok"}
+    return jsonify({"status": "ok"}),200
 
 @app.route("/upload_dataset", methods=["POST"])
 def upload_dataset():
