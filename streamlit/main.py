@@ -8,7 +8,7 @@ from io import BytesIO
 # Load environment variables
 # -------------------
 
-API_BASE_URL = "https://ecommerce-recommender-system-iikz.onrender.com"
+API_BASE_URL = "http://127.0.0.1:5000"
 
 # -------------------
 # Streamlit Config
@@ -26,7 +26,7 @@ You can upload your dataset and test different recommendation strategies.
 # -------------------
 st.sidebar.title("🔌 Backend Status")
 try:
-    health = requests.get(f"{API_BASE_URL}/health", timeout=10)
+    health = requests.get(f"{API_BASE_URL}/", timeout=10)
     if health.status_code == 200:
         st.sidebar.success("✅ Backend is Online")
     else:
@@ -63,7 +63,13 @@ if uploaded_file is not None:
             st.success("✅ Dataset uploaded and backend updated!")
         else:
             st.error("❌ Failed to upload dataset to backend.")
-            st.error(upload_response.json().get("error", "Unknown error"))
+            try:
+                error_json = upload_response.json()
+            
+                st.error(upload_response.json().get("error", "Unknown error"))
+            except ValueError:
+                st.error("⚠️ Backend returned invalid response (not JSON).")
+                st.text(f"Raw response: {upload_response.text}")
 
     except Exception as e:
         st.error(f"⚠️ Upload failed: {str(e)}")

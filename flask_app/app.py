@@ -257,7 +257,7 @@ def health():
 
 @app.route("/upload_dataset", methods=["POST"])
 def upload_dataset():
-    """Receive file from Streamlit; save to /tmp and upload to S3 (if configured)."""
+    """Receive file from Streamlit; save to /tmp and stream upload to S3."""
     try:
         if 'file' not in request.files:
             return jsonify({"error": "No file part in request"}), 400
@@ -265,27 +265,36 @@ def upload_dataset():
         if file.filename == '':
             return jsonify({"error": "No selected file"}), 400
 
-        # Save to /tmp
+        # Save file in chunks to avoid memory overload
         local_path = os.path.join(TMP_DIR, PRODUCTS_KEY)
-        file.save(local_path)
+        with open(local_path, "wb") as f:
+            for chunk in file.stream:
+                f.write(chunk)
 
-        # Upload to S3 if available
+        # Upload to S3 if configured
         if S3_BUCKET:
-            # Rewind and upload
-            with open(local_path, "rb") as fh:
-                ok = s3_upload_fileobj(fh, S3_BUCKET, PRODUCTS_KEY)
-            if not ok:
-                return jsonify({"error": "Failed to upload to S3"}), 500
+            try:
+                # Stream upload (no full in-memory read)
+                s3_client.upload_file(
+                    Filename=local_path,
+                    Bucket=S3_BUCKET,
+                    Key=PRODUCTS_KEY
+                )
+            except Exception as e:
+                logger.exception("S3 upload failed")
+                return jsonify({"error": f"S3 upload failed: {e}"}), 500
 
-        # force reload in-memory dataset
+        # Clear cached dataset in memory
         with _resources_lock:
             _resources['data'] = None
 
-        return jsonify({"message": "Dataset uploaded and stored"}), 200
+        return jsonify({"message": "Dataset uploaded successfully"}), 200
 
     except Exception as e:
         logger.exception("Upload failed")
         return jsonify({"error": str(e)}), 500
+
+
 
 def predict_tflite(padded_sequence):
     interp = load_tflite_interpreter()
