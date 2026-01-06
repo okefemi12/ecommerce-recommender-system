@@ -41,7 +41,7 @@ The Hybrid RL Agent was trained using a **Sim-to-Real** workflow in a custom Gym
 * **Stable Convergence:** The agent successfully transitioned from exploration to exploitation, with epsilon decaying to 0.05.
 * **Reward Optimization:** Cumulative reward stabilized, indicating the agent learned to prioritize high-value actions (Purchases) over low-value ones (Views).
 
-![RL Training Curve](path/to/your/image_b7d55b.png)
+![RL Training Curve]([path/to/your/image_b7d55b.png](https://dagshub.com/oke03940/hybrid-recommender))
 *(Epsilon Decay vs. Cumulative Reward over 400 Episodes)*
 
 ---
@@ -87,7 +87,6 @@ The Hybrid RL Agent was trained using a **Sim-to-Real** workflow in a custom Gym
 
 ---
 
-## 👨‍💻 Author
-**[Your Name]**
+## Author
+**[Oke Precious Oluwanifemi]**
 *ML ENGINEER*
-[LinkedIn] | [Portfolio]
