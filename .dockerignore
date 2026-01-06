@@ -1,58 +1,49 @@
-# ----------------------------
-# Python cache & bytecode
-# ----------------------------
+# Ignore Python cache & temporary files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.so
+*.log
 
-# ----------------------------
-# Virtual environments
-# ----------------------------
+# Ignore virtual environments
 venv/
 .venv/
+my-env/
 .env
-*.egg-info
 
-# ----------------------------
-# Git & editor configs
-# ----------------------------
-.git
+# Ignore git & IDE configs
+.git/
 .gitignore
-*.swp
-*.swo
-*.bak
-*.tmp
-.DS_Store
 .vscode/
 .idea/
+.DS_Store
 
-# ----------------------------
-# Logs & temp
-# ----------------------------
-*.log
-*.out
-*.err
+# Ignore notebooks and Streamlit app
+notebooks/
+streamlit/
 
-# ----------------------------
-# Large ML/Data files (ignored by default)
-# ----------------------------
+# Ignore model and large files
+ecommerce-recommender-models/
+flask_app/model/
+flask_app/brand_embeddings_chunk.npy
+flask_app/user_recommender_embeddings.npy
 *.npy
 *.npz
 *.pkl
 *.pt
-*.pth
 *.h5
-*.ckpt
-*.joblib
 *.csv
-*.tsv
-*.parquet
+*.tflite
+*.keras
+*.joblib
 
-# ----------------------------
-# EXCEPTIONS - files we actually need
-# ----------------------------
-!products.csv
-!brand_embeddings_chunk.npy
-!user_recommender_embeddings.npy
+
+README.md
+LICENSE
+
+
+
+
+
+

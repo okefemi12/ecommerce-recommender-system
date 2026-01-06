@@ -1,24 +1,30 @@
-# ---------- Base image ----------
-FROM python:3.10-slim
+FROM python:3.9-slim
 
-# ---------- Working directory ----------
 WORKDIR /app
 
-# ---------- Copy project files ----------
+# 1. Install basics
+RUN apt-get update && apt-get install -y \
+    libatomic1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 3. Copy Code
 COPY . .
 
-# ---------- Install dependencies ----------
-RUN pip install --upgrade pip \
- && pip install -r requirements.txt
+# 4. Set Python Path
+# This ensures Python understands that /app is the root of your project
+ENV PYTHONPATH=/app
 
-# ---------- Expose port ----------
-EXPOSE 10000
+# --- CRITICAL FIX FOR WINDOWS USERS ---
+# This removes the invisible "CR" characters that cause the "no such file" error
+RUN sed -i 's/\r$//' entrypoint.sh
 
-# ---------- Environment variables ----------
-ENV FLASK_APP=flask_app/app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_ENV=production
+# 5. Permissions & Ports
+RUN chmod +x entrypoint.sh
+EXPOSE 8000
 
-# ---------- Run Gunicorn ----------
-CMD gunicorn --bind 0.0.0.0:${PORT:-10000} flask_app.app:app
+CMD ["./entrypoint.sh"]
 
