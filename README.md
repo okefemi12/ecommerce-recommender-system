@@ -59,7 +59,7 @@ The Hybrid RL Agent was trained using a **Sim-to-Real** workflow in a custom Gym
 
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/yourusername/ecommerce-recommender.git](https://github.com/yourusername/ecommerce-recommender.git)
+    git clone [https://github.com/okefemi12/ecommerce-recommender-system.git](https://github.com/okefemi12/ecommerce-recommender-system.git)
     cd ecommerce-recommender
     ```
 
@@ -86,7 +86,3 @@ The Hybrid RL Agent was trained using a **Sim-to-Real** workflow in a custom Gym
 * `tests/`: Unit and integration tests.
 
 ---
-
-## Author
-**[Oke Precious Oluwanifemi]**
-*ML ENGINEER*
