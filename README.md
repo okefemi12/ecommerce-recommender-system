@@ -12,6 +12,7 @@ A production-grade recommendation engine leveraging **Hybrid Reinforcement Learn
 
 ---
 
+
 ## System Architecture
 
 This project implements a **Multi-Stage Recommendation Pipeline** designed to handle the full user journey, from cold-start to loyal engagement.
@@ -24,6 +25,7 @@ This project implements a **Multi-Stage Recommendation Pipeline** designed to ha
 | **4. Decision Engine** | **Hybrid RL Agent (Transformer-DQN)** | **The Core Innovation.** Optimizes the final ranking to maximize long-term reward (Purchase vs. Click). |
 
 ---
+![Image](https://github.com/user-attachments/assets/17f97ecb-66b5-4194-a5ae-4c65491eef22)
 
 ## Key Performance Metrics
 
