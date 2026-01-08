@@ -6,6 +6,8 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue)](https://www.docker.com/)
 [![MLflow](https://img.shields.io/badge/MLflow-Tracking-blueviolet)](https://mlflow.org/)
 
+**🔗 Live Demo:** [https://hybrid-rec.vercel.app/](https://hybrid-rec.vercel.app/)
+
 A production-grade recommendation engine leveraging **Hybrid Reinforcement Learning** and **Transformer Architectures** to optimize user engagement and long-term value (LTV).
 
 ---
